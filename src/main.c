@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "parser.h"
+
+
 int main(void) {
 
-    printf("Hello, World!\n");
+    FILE *file = fopen("input/dataset.csv", "r");
+    return generate_tables(file);
 
-    return EXIT_SUCCESS;
 }
-
