@@ -13,36 +13,42 @@ FILE *get_partition_file(int num_partition, char *mode)
     return fopen(buffer, mode);
 }
 
-bool all_closed(bool *closed)
-{
-    for (int i = 0; i < MAX_FILES; i++)
-        if (closed[i] == false)
-            return false;
-
-    return true;
-}
 
 int merge_files(int num_partitions, size_t __size, __min_fn_t __min)
 {
     int first_partition = 0;
     int last_partition = num_partitions;
     FILE **files = (FILE **)malloc(sizeof(FILE *) * MAX_FILES);
-    ProductEntry *top_records = malloc(__size * MAX_FILES);
+    ProductEntry *top_records = (ProductEntry *) malloc(__size * MAX_FILES);
+
+    ProductEntry last_written;
+    bool first_write = true;
 
     while (first_partition < last_partition)
     {
         FILE *output = get_partition_file(++last_partition, "wb");
 
-        for (int i = first_partition; i < MAX_FILES + first_partition; i++)
+        for (int i = first_partition; i < MAX_FILES + first_partition && i < last_partition; i++)
         {
-            files[i] = get_partition_file(i + 1, "rb");
-            fread(&(top_records[i]), __size, 1, files[i]);
+            int idx = i - first_partition;
+            files[idx] = get_partition_file(i + 1, "rb");
+            if (files[idx] == NULL)
+            {
+                continue;
+            }
+            fread(&(top_records[idx]), __size, 1, files[idx]);
         }
 
         int index;
         while ((index = __min(top_records, files, MAX_FILES)) != -1)
         {
-            fwrite(&(top_records[index]), __size, 1, output);
+            if (first_write || top_records[index].product_id != last_written.product_id)
+            {
+                fwrite(&(top_records[index]), __size, 1, output);
+                last_written = top_records[index];
+                first_write = false;
+            }
+
             int count = fread(&(top_records[index]), __size, 1, files[index]);
             if (count == 0)
             {
@@ -50,9 +56,13 @@ int merge_files(int num_partitions, size_t __size, __min_fn_t __min)
                 files[index] = NULL;
             }
         }
+
         fclose(output);
         first_partition += MAX_FILES;
     }
 
+    free(files);
+    free(top_records);
+
     return EXIT_SUCCESS;
-};
+}
