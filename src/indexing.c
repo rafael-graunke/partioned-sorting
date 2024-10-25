@@ -17,6 +17,7 @@ void create_product_index(void)
     while (fread(&buffer, sizeof(ProductEntry), 1, products_file))
     {
         long address = ftell(products_file) - sizeof(ProductEntry);
+        printf("INDEX GENERATE FOR KEY %ld is %ld\n", buffer.product_id, address);
 
         if (record_count % MAX_INDEX_SPAN == 0)
         {

@@ -7,7 +7,7 @@ long binsearch_in_file(FILE *source, size_t __size, int start, int end, void *ma
     int middle;
     void *cursor = malloc(__size);
 
-    if (start < end)
+    if (start <= end)
     {
         middle = (end + start) / 2;
         fseek(source, __size * middle, SEEK_SET);
@@ -17,9 +17,11 @@ long binsearch_in_file(FILE *source, size_t __size, int start, int end, void *ma
 
         int cmp = __compare(match, cursor);
 
+        printf("%d / %d / %d\n", start, middle, end);
+
         if (cmp == 0)
         {
-            printf("Match found\n");
+            printf("Match found!\n");
             return ftell(source) - __size;
         }
 

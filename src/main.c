@@ -205,9 +205,15 @@ void menu_search(void)
         printf("Searching for record based on index...\n");
 
         NumericIndexEntry index1, index2;
+        printf("POS INDEX %d\n", pos_index);
         fseek(f, (sizeof(NumericIndexEntry) * pos_index) - sizeof(NumericIndexEntry), SEEK_SET);
+        // fseek(f, (sizeof(NumericIndexEntry) * pos_index) - sizeof(NumericIndexEntry), SEEK_SET);
+
         fread(&index1, sizeof(NumericIndexEntry), 1, f);
         fread(&index2, sizeof(NumericIndexEntry), 1, f);
+
+        printf("key: %lld and addr: %ld\n", index1.key, index1.address);
+        printf("key: %lld and addr: %ld\n", index2.key, index2.address);
 
         FILE *final_products = fopen("output/final_products.bin", "rb");
         int start = index1.address / sizeof(ProductEntry);
@@ -275,6 +281,19 @@ int menu(void)
 
         case 4:
             menu_search();
+            break;
+
+        case 5:
+            FILE *in = fopen("output/final_products.bin", "rb");
+            fseek(in, 0, SEEK_END);
+            int count = ftell(in) / sizeof(ProductEntry);
+            rewind(in);
+            ProductEntry buffer;
+            for (int i = 0; i < count; i++)
+            {
+                fread(&buffer, sizeof(ProductEntry), 1, in);
+                printf("Product ID: %ld\n", buffer.product_id);
+            }
             break;
 
         case 0:
