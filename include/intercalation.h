@@ -3,7 +3,16 @@
 
 typedef int (*__min_fn_t) (const void *, FILE **files, int n);
 
-int merge_files(int num_partitions, size_t __size, __min_fn_t __min);
-int merge_final_files(int num_partition, int last_partition, size_t __size, __min_fn_t __min);
+void delete_partition(int last_partition);
+
+int merge_product_files(int num_partitions);
+int merge_product_final_files(int num_partition, int last_partition);
+
+int merge_category_files(int num_partitions);
+int merge_category_final_files(int num_partition, int last_partition);
+
+int merge_session_files(int num_partitions);
+int merge_session_final_files(int num_partition, int last_partition);
+
 
 #endif

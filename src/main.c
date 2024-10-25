@@ -2,10 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "parser.h"
 #include "partitioning.h"
 #include "intercalation.h"
-
+#include "indexing.h"
 
 int cmp_categories(const void *arg1, const void *arg2)
 {
@@ -22,44 +21,116 @@ int cmp_session(const void *arg1, const void *arg2)
     return strcmp(((SessionEntry *)arg1)->user_session, ((SessionEntry *)arg2)->user_session);
 }
 
-int min_products(const void *products, FILE **files, int n)
+void generate_docs(void)
 {
-    int index = -1;
-    ProductEntry min;
-    for (int i = 0; i < n; i++)
-        if(files[i] != NULL)
-        {
-            min = ((ProductEntry *) products)[i];
-            index = i;
-            break;
-        }
 
-    for (int i = 0; i < n; i++)
-    {
-        if(files[i] != NULL && ((ProductEntry *) products)[i].product_id < min.product_id)
-        {
-            index = i;
-            min = ((ProductEntry *) products)[i];
-        }
-    }
+    // 1 - Convert the CSV File for smaller binary files
+    FILE *file = fopen("input/dataset.csv", "r");
+    generate_tables(file);
 
-    return index;
+    // 2 - Generate Partitions and Merge Files
+
+    // Products
+    printf("Sorting products table...\n");
+
+    FILE *source = fopen("output/products.bin", "rb");
+    int num_product_partitions = partition(source, sizeof(ProductEntry), cmp_products);
+    int last_product_partition = merge_product_files(num_product_partitions);
+
+    merge_product_final_files(num_product_partitions, last_product_partition);
+    delete_partition(last_product_partition);
+    fclose(source);
+
+    printf("Done.\n");
+
+    // //Categories
+    printf("Sorting categories table...\n");
+
+    source = fopen("output/categories.bin", "rb");
+    int num_category_partitions = partition(source, sizeof(CategoryEntry), cmp_categories);
+    int last_category_partition = merge_category_files(num_category_partitions);
+
+    merge_category_final_files(num_category_partitions, last_category_partition);
+    delete_partition(last_category_partition);
+    fclose(source);
+
+    printf("Done.\n");
+
+    // Sessions
+    printf("Sorting sessions table...\n");
+
+    source = fopen("output/sessions.bin", "rb");
+    int num_session_partitions = partition(source, sizeof(SessionEntry), cmp_session);
+    int last_session_partition = merge_session_files(num_session_partitions);
+
+    merge_session_final_files(num_session_partitions, last_session_partition);
+    delete_partition(last_session_partition);
+    fclose(source);
+
+    printf("Done.\n");
 }
 
+void generate_indexes(void)
+{
+    printf("Creating indexes...\n");
 
-int main(void) {
+    create_product_index();  // Product
+    create_category_index(); // Category
+    create_session_index();  // Session
 
-    //1 - Convert the CSV File for smaller binary files 
-    // FILE *file = fopen("input/dataset.csv", "r");
-    // generate_tables(file);
+    printf("Done.\n");
+}
 
+void menu_insertion(void) {}
+void menu_exclude(void) {}
+void menu_search(void) {}
 
-    //2 - Generate  
-    // FILE *source = fopen("output/products.bin", "rb");
-    // int num_product_partitions = partition(source, sizeof(ProductEntry), cmp_products);
-    // int last_product_partition = merge_files(46, sizeof(ProductEntry), min_products);
+int menu(void)
+{
+    int option = -1;
 
-    merge_final_files(46, 58, sizeof(ProductEntry), min_products);
+    while (option != 0)
+    {
+        printf("1 - Gerar tabelas e ordenar\n");
+        printf("2 - Inserir dados\n");
+        printf("3 - Remover dados\n");
+        printf("4 - Procurar dados\n");
+        printf("0 - Sair\n");
+        printf("Escolha uma opcao:\n");
+        scanf("%d", &option);
 
-    // merge_final_files(num_product_partitions, last_product_partition, sizeof(ProductEntry), min_products);
+        switch (option)
+        {
+        case 1:
+            generate_docs();
+            break;
+
+        case 2:
+            menu_insertion();
+            break;
+
+        case 3:
+            menu_exclude();
+            break;
+
+        case 4:
+            menu_search();
+            break;
+
+        case 0:
+            generate_indexes();
+            printf("Exiting...\n");
+            break;
+
+        default:
+            printf("Invalid option.\n");
+            break;
+        }
+    }
+}
+
+int main(void)
+{
+    menu();
+    return EXIT_SUCCESS;
 }

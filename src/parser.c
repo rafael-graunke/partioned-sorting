@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
@@ -15,6 +16,16 @@ int generate_tables(FILE *source)
     CategoryEntry category_buffer;
     ProductEntry product_buffer;
     SessionEntry session_buffer;
+
+    category_buffer.deleted = false;
+    category_buffer.next = 0;
+
+    product_buffer.deleted = false;
+    product_buffer.next = 0;
+
+    session_buffer.deleted = false;
+    session_buffer.next = 0;
+
     char line_buffer[512];
     fgets(line_buffer, 512, source); // skip first line
 
@@ -35,7 +46,7 @@ int generate_tables(FILE *source)
         fwrite(&product_buffer, sizeof(ProductEntry), 1, products);
         fwrite(&session_buffer, sizeof(SessionEntry), 1, sessions);
 
-        //Reset the buffer to avoid overwrite
+        // Reset the buffer to avoid overwrite
         memset(&category_buffer, 0, sizeof(category_buffer));
         memset(&product_buffer, 0, sizeof(product_buffer));
         memset(&session_buffer, 0, sizeof(session_buffer));
@@ -45,5 +56,3 @@ int generate_tables(FILE *source)
     fclose(products);
     fclose(sessions);
 }
-
-
