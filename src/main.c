@@ -198,6 +198,7 @@ void menu_search(void)
         if (address != -1)
         {
             printf("Record found!\n");
+            // TODO: print value
             break;
         }
 
@@ -212,12 +213,17 @@ void menu_search(void)
         int start = index1.address / sizeof(ProductEntry);
         end = index2.address / sizeof(ProductEntry);
 
-        printf("Index 1: %ld / %d\n", index1.address, start);
-        printf("Index 2: %ld / %d\n", index2.address, end);
+        long record_address = binsearch_in_file(final_products, sizeof(ProductEntry), start, end, &product_id, &pos_index, cmp_product_id);
 
-        long asasd = binsearch_in_file(final_products, sizeof(ProductEntry), start, end, &product_id, &pos_index, cmp_product_id);
-
-        printf("%.8lx\n", asasd);
+        if (record_address != -1)
+        {
+            printf("Record found!\n");
+            // TODO: print value
+        }
+        else
+        {
+            printf("Not found.\n");
+        }
 
         printf("Done.\n");
 
