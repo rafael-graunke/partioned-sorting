@@ -31,7 +31,7 @@ int generate_tables(FILE *source)
 
     while (fgets(line_buffer, 512, source) != NULL)
     {
-        sscanf(line_buffer, "%[^,],%[^,],%d,%lld,%[^,],%[^,], %f, %d, %[^,]",
+        sscanf(line_buffer, "%[^,],%[^,],%ld,%lld,%[^,],%[^,], %f, %d, %[^,]",
                session_buffer.event_time,
                session_buffer.event_type,
                &product_buffer.product_id,

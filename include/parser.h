@@ -13,17 +13,17 @@ typedef struct category_entry_s
 {
     unsigned long long category_id;
     char category_code[CATEGORY_CODE_SIZE];
-    unsigned long next;
+    long next;
     bool deleted;
 } CategoryEntry;
 // Total = 58 bytes
 
 typedef struct product_entry_s
 {
-    int product_id;
+    long product_id;
     char brand[PRODUCT_BRAND_SIZE];
     float price;
-    unsigned long next;
+    long next;
     bool deleted;
 } ProductEntry;
 // Total = 45 bytes
@@ -34,7 +34,7 @@ typedef struct session_entry_s
     char event_type[EVENT_TYPE_SIZE];
     char user_session[EVENT_USER_SESSION_SIZE];
     unsigned int user_id;
-    unsigned long next;
+    long next;
     bool deleted;
 
 } SessionEntry;

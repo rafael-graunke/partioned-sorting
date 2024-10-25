@@ -5,6 +5,8 @@
 #include "partitioning.h"
 #include "intercalation.h"
 #include "indexing.h"
+#include "searching.h"
+// #include "showing.h"
 
 int cmp_categories(const void *arg1, const void *arg2)
 {
@@ -19,6 +21,16 @@ int cmp_products(const void *arg1, const void *arg2)
 int cmp_session(const void *arg1, const void *arg2)
 {
     return strcmp(((SessionEntry *)arg1)->user_session, ((SessionEntry *)arg2)->user_session);
+}
+
+int cmp_numeric_index(const void *id, const void *index)
+{
+    return *((int *)id) - ((NumericIndexEntry *)index)->key;
+}
+
+int cmp_product_id(const void *id, const void *product)
+{
+    return *((int *)id) - ((ProductEntry *)product)->product_id;
 }
 
 void generate_docs(void)
@@ -37,8 +49,11 @@ void generate_docs(void)
     int num_product_partitions = partition(source, sizeof(ProductEntry), cmp_products);
     int last_product_partition = merge_product_files(num_product_partitions);
 
-    merge_product_final_files(num_product_partitions, last_product_partition);
-    delete_partition(last_product_partition);
+    char buffer[256];
+    sprintf(buffer, "output/partitions/partition_%d.bin", last_product_partition);
+    rename(buffer, "output/final_products.bin");
+
+    delete_partition(last_product_partition - 1);
     fclose(source);
 
     printf("Done.\n");
@@ -50,8 +65,10 @@ void generate_docs(void)
     int num_category_partitions = partition(source, sizeof(CategoryEntry), cmp_categories);
     int last_category_partition = merge_category_files(num_category_partitions);
 
-    merge_category_final_files(num_category_partitions, last_category_partition);
-    delete_partition(last_category_partition);
+    sprintf(buffer, "output/partitions/partition_%d.bin", last_category_partition);
+    rename(buffer, "output/final_categories.bin");
+
+    delete_partition(last_category_partition - 1);
     fclose(source);
 
     printf("Done.\n");
@@ -63,8 +80,10 @@ void generate_docs(void)
     int num_session_partitions = partition(source, sizeof(SessionEntry), cmp_session);
     int last_session_partition = merge_session_files(num_session_partitions);
 
-    merge_session_final_files(num_session_partitions, last_session_partition);
-    delete_partition(last_session_partition);
+    sprintf(buffer, "output/partitions/partition_%d.bin", last_session_partition);
+    rename(buffer, "output/final_sessions.bin");
+
+    delete_partition(last_session_partition - 1);
     fclose(source);
 
     printf("Done.\n");
@@ -81,9 +100,144 @@ void generate_indexes(void)
     printf("Done.\n");
 }
 
-void menu_insertion(void) {}
-void menu_exclude(void) {}
-void menu_search(void) {}
+void menu_insertion(void)
+{
+    int option = -1;
+
+    printf("1 - Inserir em Produtos \n");
+    printf("2 - Inserir em Categorias\n");
+    printf("3 - Inserir em Sessões\n");
+    printf("4 - Retornar\n");
+    printf("Escolha uma opcao:\n");
+    scanf("%d", &option);
+
+    switch (option)
+    {
+    case 1:
+        // TODO: Insert products
+        break;
+
+    case 2:
+        // TODO: Insert products
+        break;
+
+    case 3:
+        // TODO: Insert products
+        break;
+
+    case 4:
+        return;
+
+    default:
+        printf("Invalid option.\n");
+        break;
+    }
+}
+
+void menu_exclude(void)
+{
+    int option = -1;
+
+    printf("1 - Excluir em Produtos \n");
+    printf("2 - Excluir em Categorias\n");
+    printf("3 - Excluir em Sessões\n");
+    printf("4 - Retornar\n");
+    printf("Escolha uma opcao:\n");
+    scanf("%d", &option);
+
+    switch (option)
+    {
+    case 1:
+        // TODO: Exclude products
+        break;
+
+    case 2:
+        // TODO: Exclude products
+        break;
+
+    case 3:
+        // TODO: Exclude products
+        break;
+
+    case 4:
+        return;
+
+    default:
+        printf("Invalid option.\n");
+        break;
+    }
+}
+
+void menu_search(void)
+{
+    int option = -1;
+
+    printf("1 - Search em Produtos \n");
+    printf("2 - Search em Categorias\n");
+    printf("3 - Search em Sessões\n");
+    printf("4 - Retornar\n");
+    printf("Escolha uma opcao:\n");
+    scanf("%d", &option);
+
+    switch (option)
+    {
+    case 1:
+        long product_id;
+        int pos_index;
+        printf("Digite o 'product_id':\n");
+        scanf("%ld", &product_id);
+
+        printf("Searching for index...\n");
+
+        FILE *f = fopen("output/index_products.bin", "rb");
+        fseek(f, 0, SEEK_END);
+        int end = (ftell(f) / sizeof(NumericIndexEntry)) - 1;
+        fseek(f, 0, SEEK_SET);
+
+        long address = binsearch_in_file(f, sizeof(NumericIndexEntry), 0, end, &product_id, &pos_index, cmp_numeric_index);
+        if (address != -1)
+        {
+            printf("Record found!\n");
+            break;
+        }
+
+        printf("Searching for record based on index...\n");
+
+        NumericIndexEntry index1, index2;
+        fseek(f, (sizeof(NumericIndexEntry) * pos_index) - sizeof(NumericIndexEntry), SEEK_SET);
+        fread(&index1, sizeof(NumericIndexEntry), 1, f);
+        fread(&index2, sizeof(NumericIndexEntry), 1, f);
+
+        FILE *final_products = fopen("output/final_products.bin", "rb");
+        int start = index1.address / sizeof(ProductEntry);
+        end = index2.address / sizeof(ProductEntry);
+
+        printf("Index 1: %ld / %d\n", index1.address, start);
+        printf("Index 2: %ld / %d\n", index2.address, end);
+
+        long asasd = binsearch_in_file(final_products, sizeof(ProductEntry), start, end, &product_id, &pos_index, cmp_product_id);
+
+        printf("%.8lx\n", asasd);
+
+        printf("Done.\n");
+
+        break;
+
+    case 2:
+        // TODO: Search categories
+        break;
+
+    case 3:
+        // TODO: Search sessions
+        break;
+    case 4:
+        return;
+
+    default:
+        printf("Invalid option.\n");
+        break;
+    }
+}
 
 int menu(void)
 {

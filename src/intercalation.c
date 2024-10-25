@@ -14,6 +14,13 @@ FILE *get_partition_file(int num_partition, char *mode)
     return fopen(buffer, mode);
 }
 
+FILE *get_merged_file(int num_partition, char *mode)
+{
+    char buffer[35];
+    sprintf(buffer, "output/partitions/merged_%d.bin", num_partition);
+    return fopen(buffer, mode);
+}
+
 void delete_partition(int last_partition)
 {
     char buffer[35];
@@ -102,60 +109,6 @@ int merge_product_files(int num_partitions)
     return last_partition;
 }
 
-int merge_product_final_files(int num_partition, int last_partition)
-{
-    FILE **files = (FILE **)malloc(sizeof(FILE *) * MAX_FILES);
-    ProductEntry *top_records = (ProductEntry *)malloc(sizeof(ProductEntry) * MAX_FILES);
-
-    ProductEntry last_written;
-    bool first_write = true;
-
-    FILE *output = fopen("output/final_products.bin", "wb");
-    if (output == NULL)
-        return EXIT_FAILURE;
-
-    while (num_partition < last_partition)
-    {
-        int part_count = (num_partition + MAX_FILES) > last_partition ? last_partition - num_partition : MAX_FILES;
-
-        for (int i = 0; i < part_count; i++)
-        {
-            files[i] = get_partition_file(num_partition + i + 1, "rb");
-            if (files[i] == NULL)
-            {
-                continue;
-            }
-            fread(&(top_records[i]), sizeof(ProductEntry), 1, files[i]);
-        }
-
-        int index;
-        while ((index = min_products(top_records, files, MAX_FILES)) != -1)
-        {
-            if (first_write || top_records[index].product_id != last_written.product_id)
-            {
-                fwrite(&(top_records[index]), sizeof(ProductEntry), 1, output);
-                last_written = top_records[index];
-                first_write = false;
-            }
-
-            int count = fread(&(top_records[index]), sizeof(ProductEntry), 1, files[index]);
-            if (count == 0)
-            {
-                fclose(files[index]);
-                files[index] = NULL;
-            }
-        }
-
-        num_partition += MAX_FILES;
-    }
-
-    fclose(output);
-    free(files);
-    free(top_records);
-
-    return last_partition;
-}
-
 // MERGING CATEGORIES PARTITIONS
 
 int min_categories(CategoryEntry *categories, FILE **files, int n)
@@ -235,59 +188,6 @@ int merge_category_files(int num_partitions)
     return last_partition;
 }
 
-int merge_category_final_files(int num_partition, int last_partition)
-{
-    FILE **files = (FILE **)malloc(sizeof(FILE *) * MAX_FILES);
-    CategoryEntry *top_records = (CategoryEntry *)malloc(sizeof(CategoryEntry) * MAX_FILES);
-
-    CategoryEntry last_written;
-    bool first_write = true;
-
-    FILE *output = fopen("output/final_categories.bin", "wb");
-    if (output == NULL)
-        return EXIT_FAILURE;
-
-    while (num_partition < last_partition)
-    {
-        int part_count = (num_partition + MAX_FILES) > last_partition ? last_partition - num_partition : MAX_FILES;
-
-        for (int i = 0; i < part_count; i++)
-        {
-            files[i] = get_partition_file(num_partition + i + 1, "rb");
-            if (files[i] == NULL)
-            {
-                continue;
-            }
-            fread(&(top_records[i]), sizeof(CategoryEntry), 1, files[i]);
-        }
-
-        int index;
-        while ((index = min_categories(top_records, files, MAX_FILES)) != -1)
-        {
-            if (first_write || top_records[index].category_id != last_written.category_id)
-            {
-                fwrite(&(top_records[index]), sizeof(CategoryEntry), 1, output);
-                last_written = top_records[index];
-                first_write = false;
-            }
-
-            int count = fread(&(top_records[index]), sizeof(CategoryEntry), 1, files[index]);
-            if (count == 0)
-            {
-                fclose(files[index]);
-                files[index] = NULL;
-            }
-        }
-
-        num_partition += MAX_FILES;
-    }
-
-    fclose(output);
-    free(files);
-    free(top_records);
-
-    return last_partition;
-}
 
 // MERGING SESSION PARTITIONS
 int min_session(SessionEntry *sessions, FILE **files, int n)
@@ -363,60 +263,6 @@ int merge_session_files(int num_partitions)
         first_partition += MAX_FILES;
     }
 
-    free(files);
-    free(top_records);
-
-    return last_partition;
-}
-
-int merge_session_final_files(int num_partition, int last_partition)
-{
-    FILE **files = (FILE **)malloc(sizeof(FILE *) * MAX_FILES);
-    SessionEntry *top_records = (SessionEntry *)malloc(sizeof(SessionEntry) * MAX_FILES);
-
-    SessionEntry last_written;
-    bool first_write = true;
-
-    FILE *output = fopen("output/final_sessions.bin", "wb");
-    if (output == NULL)
-        return EXIT_FAILURE;
-
-    while (num_partition < last_partition)
-    {
-        int part_count = (num_partition + MAX_FILES) > last_partition ? last_partition - num_partition : MAX_FILES;
-
-        for (int i = 0; i < part_count; i++)
-        {
-            files[i] = get_partition_file(num_partition + i + 1, "rb");
-            if (files[i] == NULL)
-            {
-                continue;
-            }
-            fread(&(top_records[i]), sizeof(SessionEntry), 1, files[i]);
-        }
-
-        int index;
-        while ((index = min_session(top_records, files, MAX_FILES)) != -1)
-        {
-            if (first_write || !(strcmp(top_records[index].user_session, last_written.user_session) == 0))
-            {
-                fwrite(&(top_records[index]), sizeof(SessionEntry), 1, output);
-                last_written = top_records[index];
-                first_write = false;
-            }
-
-            int count = fread(&(top_records[index]), sizeof(SessionEntry), 1, files[index]);
-            if (count == 0)
-            {
-                fclose(files[index]);
-                files[index] = NULL;
-            }
-        }
-
-        num_partition += MAX_FILES;
-    }
-
-    fclose(output);
     free(files);
     free(top_records);
 
