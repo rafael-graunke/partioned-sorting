@@ -7,8 +7,8 @@
 #include <stdbool.h>
 #include "parser.h"
 
-void show_product(ProductEntry product);
-void show_category(CategoryEntry category);
-void show_session(SessionEntry session);
+void show_product(long address);
+void show_category(long address);
+void show_session(long address);
 
 #endif

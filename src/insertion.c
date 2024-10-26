@@ -2,11 +2,11 @@
 
 #define MAX_EXTENSION_AREA_SIZE 1000
 
+void insert_product(ProductEntry new_record, __compar_fn_t __compare)
+{
+    FILE *data_file = fopen("output/final_products.bin", "rb");
+    FILE *extension_file = fopen("output/extension_products.bin", "ab");
 
-void insert_product(ProductEntry new_record, __compar_fn_t __compare){
-    FILE * data_file = fopen("output/final_products.bin", "rb");
-    FILE * extension_file = fopen("output/extension_products.bin", "ab");
-    
     // long insert_pos = binsearch_in_file(data_file, sizeof(ProductEntry), &new_record.product_id, __compare);
 
     fseek(extension_file, 0, SEEK_END);

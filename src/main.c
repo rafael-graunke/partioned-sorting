@@ -6,7 +6,7 @@
 #include "intercalation.h"
 #include "indexing.h"
 #include "searching.h"
-// #include "showing.h"
+#include "show.h"
 
 int cmp_categories(const void *arg1, const void *arg2)
 {
@@ -28,9 +28,24 @@ int cmp_numeric_index(const void *id, const void *index)
     return *((int *)id) - ((NumericIndexEntry *)index)->key;
 }
 
+int cmp_string_index(const void *id, const void *index)
+{
+    return strncmp((char *)id, ((StringIndexEntry *)index)->key, EVENT_USER_SESSION_SIZE - 1);
+}
+
 int cmp_product_id(const void *id, const void *product)
 {
     return *((int *)id) - ((ProductEntry *)product)->product_id;
+}
+
+int cmp_category_id(const void *id, const void *category)
+{
+    return *((int *)id) - ((CategoryEntry *)category)->category_id;
+}
+
+int cmp_user_session(const void *id, const void *session)
+{
+    return strncmp((char *)id, ((SessionEntry *)session)->user_session, EVENT_USER_SESSION_SIZE - 1);
 }
 
 void generate_docs(void)
@@ -179,32 +194,38 @@ void menu_search(void)
     printf("Escolha uma opcao:\n");
     scanf("%d", &option);
 
+    int end;
+    int start;
+    long record_address;
+    int pos_index;
+    FILE *f;
+    NumericIndexEntry index1, index2;
+    long address;
+
     switch (option)
     {
     case 1:
         long product_id;
-        int pos_index;
         printf("Digite o 'product_id':\n");
         scanf("%ld", &product_id);
 
         printf("Searching for index...\n");
 
-        FILE *f = fopen("output/index_products.bin", "rb");
+        f = fopen("output/index_products.bin", "rb");
         fseek(f, 0, SEEK_END);
-        int end = (ftell(f) / sizeof(NumericIndexEntry)) - 1;
+        end = (ftell(f) / sizeof(NumericIndexEntry)) - 1;
         fseek(f, 0, SEEK_SET);
 
-        long address = binsearch_in_file(f, sizeof(NumericIndexEntry), 0, end, &product_id, &pos_index, cmp_numeric_index);
+        address = binsearch_in_file(f, sizeof(NumericIndexEntry), 0, end, &product_id, &pos_index, cmp_numeric_index);
         if (address != -1)
         {
             printf("Record found!\n");
-            // TODO: print value
+            show_product(address);
             break;
         }
 
         printf("Searching for record based on index...\n");
 
-        NumericIndexEntry index1, index2;
         printf("POS INDEX %d\n", pos_index);
         fseek(f, (sizeof(NumericIndexEntry) * pos_index) - sizeof(NumericIndexEntry), SEEK_SET);
         // fseek(f, (sizeof(NumericIndexEntry) * pos_index) - sizeof(NumericIndexEntry), SEEK_SET);
@@ -216,15 +237,15 @@ void menu_search(void)
         printf("key: %lld and addr: %ld\n", index2.key, index2.address);
 
         FILE *final_products = fopen("output/final_products.bin", "rb");
-        int start = index1.address / sizeof(ProductEntry);
+        start = index1.address / sizeof(ProductEntry);
         end = index2.address / sizeof(ProductEntry);
 
-        long record_address = binsearch_in_file(final_products, sizeof(ProductEntry), start, end, &product_id, &pos_index, cmp_product_id);
+        record_address = binsearch_in_file(final_products, sizeof(ProductEntry), start, end, &product_id, &pos_index, cmp_product_id);
 
         if (record_address != -1)
         {
             printf("Record found!\n");
-            // TODO: print value
+            show_product(record_address);
         }
         else
         {
@@ -236,11 +257,107 @@ void menu_search(void)
         break;
 
     case 2:
-        // TODO: Search categories
+        long category_id;
+        printf("Digite o 'category_id':\n");
+        scanf("%ld", &category_id);
+
+        printf("Searching for index...\n");
+
+        f = fopen("output/index_categories.bin", "rb");
+        fseek(f, 0, SEEK_END);
+        end = (ftell(f) / sizeof(NumericIndexEntry)) - 1;
+        fseek(f, 0, SEEK_SET);
+
+        address = binsearch_in_file(f, sizeof(NumericIndexEntry), 0, end, &category_id, &pos_index, cmp_numeric_index);
+        if (address != -1)
+        {
+            printf("Record found!\n");
+            show_category(address);
+            break;
+        }
+
+        printf("Searching for record based on index...\n");
+
+        printf("POS INDEX %d\n", pos_index);
+        fseek(f, (sizeof(NumericIndexEntry) * pos_index) - sizeof(NumericIndexEntry), SEEK_SET);
+        // fseek(f, (sizeof(NumericIndexEntry) * pos_index) - sizeof(NumericIndexEntry), SEEK_SET);
+
+        fread(&index1, sizeof(NumericIndexEntry), 1, f);
+        fread(&index2, sizeof(NumericIndexEntry), 1, f);
+
+        printf("key: %lld and addr: %ld\n", index1.key, index1.address);
+        printf("key: %lld and addr: %ld\n", index2.key, index2.address);
+
+        FILE *final_categories = fopen("output/final_categories.bin", "rb");
+        start = index1.address / sizeof(CategoryEntry);
+        end = index2.address / sizeof(CategoryEntry);
+
+        record_address = binsearch_in_file(final_categories, sizeof(CategoryEntry), start, end, &category_id, &pos_index, cmp_category_id);
+
+        if (record_address != -1)
+        {
+            printf("Record found!\n");
+            show_category(record_address);
+        }
+        else
+        {
+            printf("Not found.\n");
+        }
+
+        printf("Done.\n");
         break;
 
     case 3:
-        // TODO: Search sessions
+        char session_id[EVENT_USER_SESSION_SIZE];
+        printf("Digite o 'session_id':\n");
+        scanf("%s", session_id);
+
+        printf("Searching for index...\n");
+
+        f = fopen("output/index_sessions.bin", "rb");
+        fseek(f, 0, SEEK_END);
+        end = (ftell(f) / sizeof(StringIndexEntry)) - 1;
+        fseek(f, 0, SEEK_SET);
+
+        address = binsearch_in_file(f, sizeof(StringIndexEntry), 0, end, &session_id, &pos_index, cmp_string_index);
+        if (address != -1)
+        {
+            printf("Record found!\n");
+            show_session(address);
+            break;
+        }
+
+        printf("Searching for record based on index...\n");
+
+        StringIndexEntry sindex1, sindex2;
+        printf("POS INDEX %d\n", pos_index);
+        fseek(f, (sizeof(StringIndexEntry) * pos_index) - sizeof(StringIndexEntry), SEEK_SET);
+        // fseek(f, (sizeof(StringIndexEntry) * pos_index) - sizeof(StringIndexEntry), SEEK_SET);
+
+        fread(&sindex1, sizeof(StringIndexEntry), 1, f);
+        fread(&sindex2, sizeof(StringIndexEntry), 1, f);
+
+        // printf("key: %lld and addr: %ld\n", sindex1.key, sindex1.address);
+        // printf("key: %lld and addr: %ld\n", sindex2.key, sindex2.address);
+
+        FILE *final_sessions = fopen("output/final_sessions.bin", "rb");
+        start = sindex1.address / sizeof(SessionEntry);
+        end = sindex2.address / sizeof(SessionEntry);
+
+        record_address = binsearch_in_file(final_sessions, sizeof(SessionEntry), start, end, &category_id, &pos_index, cmp_user_session);
+
+        if (record_address != -1)
+        {
+            printf("Record found!\n");
+            show_session(record_address);
+        }
+        else
+        {
+            printf("Not found.\n");
+        }
+
+        printf("Done.\n");
+
         break;
     case 4:
         return;

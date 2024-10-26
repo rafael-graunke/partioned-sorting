@@ -21,7 +21,7 @@ A estrutura `CategoryEntry` é utilizada para representar uma categoria de produ
 ### 2. `ProductEntry`
 
 A estrutura `ProductEntry` é utilizada para armazenar informações sobre um produto. Contém os campos:
-- **product_id:** ID do produto (int)
+- **product_id:** ID do produto (long)
 - **brand:** Marca do produto (char array)
 - **price:** Preço do produto (float)
 - **next:** Próximo registro (long)
