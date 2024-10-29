@@ -3,9 +3,6 @@ This project aims to apply techniques learned during Algorithms and Data Structu
 
 
 
-Definir duas ou tres perguntas para fazer ao conjunto de dados (Serão as consultas que serão realizadas nos dados)
-
-
 
 ## Estruturas de Dados
 
